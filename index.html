@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sylpex Tomato — 極簡暗黑主題番茄鐘，支援碼錶、倒數計時與 Spotify 即時歌曲資訊整合。">
+  <title>Sylpex Tomato | Minimal Clock &amp; Spotify Ambient</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 雙層模糊專輯封面背景層（平滑 Crossfade 轉場，防止閃爍） -->
+  <div id="bgAlbumArtA" class="bg-album-layer"></div>
+  <div id="bgAlbumArtB" class="bg-album-layer"></div>
+
+  <!-- 極簡頂部載入指示條 -->
+  <div id="loaderIndicator" class="loader-indicator"></div>
+
+  <!-- 動態粒子背景 -->
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- 頂部提示通知 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 主版面：預設置中，Spotify 連接後切換為左右分割 -->
+  <div class="app-layout" id="appLayout">
+
+    <!-- 左側：時鐘 / 碼錶 / 倒數 -->
+    <div class="panel-clock">
+      <div class="mode-tag" id="modeTag">CLOCK</div>
+      <div class="time-display" id="mainDisplay">00:00:00</div>
+      <div class="sub-display" id="subDisplay"></div>
+
+      <!-- 時間下方的 Loading 提示（含 loading 字樣與 0.5 秒進度條） -->
+      <div class="clock-loading" id="clockLoading">
+        <span class="clock-loading-text">LOADING</span>
+        <div class="clock-loading-bar">
+          <div class="clock-loading-fill" id="clockLoadingFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側：Spotify 播放區塊（未連接時隱藏） -->
+    <div class="panel-spotify" id="panelSpotify">
+      <img class="spotify-album" id="spotifyCover" src="" alt="Album Cover">
+      <div class="spotify-meta">
+        <div class="spotify-track-name" id="spotifyTrack">未在播放音樂</div>
+        <div class="spotify-track-artist" id="spotifyArtist">Spotify</div>
+
+        <!-- 播放進度條 -->
+        <div class="spotify-progress-wrap">
+          <div class="spotify-progress-bar">
+            <div class="spotify-progress-fill" id="progressFill"></div>
+          </div>
+          <div class="spotify-time-row">
+            <span id="progressCurrent">0:00</span>
+            <span id="progressTotal">0:00</span>
+          </div>
+        </div>
+
+        <!-- 播放控制（暫時隱藏 PREV/PLAY/NEXT，提供前往 Spotify 按鈕） -->
+        <div class="spotify-controls">
+          <a class="ctrl-btn ctrl-btn-main ctrl-btn-spotify" id="btnOpenSpotify" href="https://open.spotify.com" target="_blank" rel="noopener noreferrer">OPEN SPOTIFY</a>
+          <div class="hidden-playback-controls" style="display:none;">
+            <button class="ctrl-btn" id="btnPrev" onclick="spotifyPrevious()">PREV</button>
+            <button class="ctrl-btn ctrl-btn-main" id="btnPlayPause" onclick="spotifyPlayPause()">PLAY</button>
+            <button class="ctrl-btn" id="btnNext" onclick="spotifyNext()">NEXT</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 畫面中間下方提示 -->
+  <div class="bottom-hint" id="bottomHint" onclick="toggleHelpModal()">按 H 顯示說明</div>
+
+  <!-- Spotify Client ID 設定 Modal -->
+  <div class="modal-overlay" id="spotifyModal">
+    <div class="modal-card">
+      <div class="modal-title">串接 Spotify API</div>
+      <div class="modal-desc">
+        請輸入您在 Spotify Developer Dashboard 建立的 <b>Client ID</b>。<br><br>
+        將重定向網址 (Redirect URI) 設為：<br>
+        <code id="redirectUriText" class="modal-code"></code>
+      </div>
+      <input type="text" class="modal-input" id="clientIdInput" placeholder="貼上你的 Spotify Client ID">
+      <div class="modal-btn-group">
+        <button class="btn btn-secondary" id="btnCancelSpotify" onclick="closeModal('spotifyModal')">取消</button>
+        <button class="btn btn-primary" id="btnConnectSpotify" onclick="startSpotifyAuth()">連結授權</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 倒數計時設定 Modal -->
+  <div class="modal-overlay" id="timerModal">
+    <div class="modal-card">
+      <div class="modal-title">設定倒數計時</div>
+      <div class="modal-desc">請輸入倒數分鐘與秒數：</div>
+      <div style="display:flex; gap:10px; margin-bottom: 1.5rem;">
+        <input type="number" class="modal-input" id="timerMinInput" placeholder="分鐘" min="0" value="25" style="margin:0;">
+        <input type="number" class="modal-input" id="timerSecInput" placeholder="秒數" min="0" max="59" value="0" style="margin:0;">
+      </div>
+      <div class="modal-btn-group">
+        <button class="btn btn-secondary" id="btnCancelTimer" onclick="closeModal('timerModal')">取消</button>
+        <button class="btn btn-primary" id="btnApplyTimer" onclick="applyTimerSettings()">設定並重置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快捷鍵說明 Modal -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal-card">
+      <div class="modal-title">快捷鍵指南</div>
+      <div class="shortcut-list">
+        <div class="shortcut-item"><span>切換模式 (時鐘 / 碼錶 / 倒數)</span> <kbd>R</kbd></div>
+        <div class="shortcut-item"><span>開始 / 暫停 (碼錶 / 倒數)</span> <kbd>Space</kbd></div>
+        <div class="shortcut-item"><span>重置 (碼錶 / 倒數)</span> <kbd>C</kbd></div>
+        <div class="shortcut-item"><span>設定倒數時間</span> <kbd>S</kbd></div>
+        <div class="shortcut-item"><span>設定 Spotify Client ID</span> <kbd>K</kbd></div>
+        <div class="shortcut-item"><span>切換游標顯示 / 隱藏</span> <kbd>M</kbd></div>
+        <div class="shortcut-item"><span>開啟設定</span> <kbd>P</kbd></div>
+        <div class="shortcut-item"><span>說明指南 (開 / 關)</span> <kbd>H</kbd></div>
+      </div>
+      <label class="dont-show-label">
+        <span class="dont-show-check-wrap">
+          <input type="checkbox" id="dontShowHelp" onchange="onHelpCheckboxChange(this)">
+          <span class="dont-show-checkmark"></span>
+        </span>
+        下次不再提醒
+      </label>
+      <div class="modal-btn-group" style="margin-top:1.5rem;">
+        <button class="btn btn-primary" id="btnCloseHelp" onclick="closeHelpModal()">了解</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 使用者偏好設定 Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-title">設定</div>
+      <div class="settings-section">
+        <div class="settings-section-title">顯示</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-name">隱藏滑鼠游標</span>
+            <span class="setting-hint">快捷鍵 M 可隨時切換</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="settingHideCursor"
+              onchange="onSettingChange('setting_cursor_hidden', this)">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-btn-group">
+        <button class="btn btn-primary" id="btnCloseSettings" onclick="closeSettingsModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    載入順序：
+    1. canvas.js   — 背景動畫（提供 targetRgb, extractDominantColor）
+    2. clock.js    — 計時邏輯（提供 showToast, openModal, closeModal, currentMode, loading 等）
+    3. settings.js — 偏好設定（依賴 clock.js 的 showToast/openModal/closeModal）
+    4. keyboard.js — 快捷鍵（依賴 clock.js, settings.js）
+    5. spotify.js  — Spotify API（依賴 canvas.js 與 clock.js）
+  -->
+  <script src="js/canvas.js"></script>
+  <script src="js/clock.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/spotify.js"></script>
+
+</body>
+</html>

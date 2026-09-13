@@ -1,0 +1,830 @@
+/* =========================================
+   設計 Token — 全域 CSS 自訂屬性
+   ========================================= */
+:root {
+  --bg-color: #000000;
+  --text-color: #ffffff;
+  --subtext-color: #888888;
+  --accent-rgb: 255, 255, 255;
+  --panel-transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  --split-divider: rgba(255, 255, 255, 0.1);
+  --progress-bg: rgba(255, 255, 255, 0.15);
+  --progress-fill: #ffffff;
+  --ctrl-border: rgba(255, 255, 255, 0.25);
+  --ctrl-color: #ffffff;
+  --ctrl-hover-bg: rgba(255, 255, 255, 0.12);
+  --text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+  --cover-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+
+  /* Modal 深色模式 Token */
+  --modal-overlay-bg: rgba(0, 0, 0, 0.85);
+  --modal-card-bg: #121212;
+  --modal-border: 2px solid #ffffff;
+  --modal-text: #ffffff;
+  --modal-desc: #888888;
+  --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  --modal-input-bg: #1a1a1a;
+  --modal-input-border: #333333;
+  --modal-input-text: #ffffff;
+  --modal-input-focus: #ffffff;
+  --btn-pri-bg: #ffffff;
+  --btn-pri-text: #000000;
+  --btn-sec-bg: #2a2a2a;
+  --btn-sec-text: #ffffff;
+  --kbd-bg: #2a2a2a;
+  --kbd-border: #444444;
+  --kbd-text: #ffffff;
+  --setting-section-border: rgba(255, 255, 255, 0.08);
+  --toggle-track-off: #333333;
+  --toggle-thumb-off: #666666;
+  --toggle-track-on: #ffffff;
+  --toggle-thumb-on: #000000;
+  --checkbox-border: #555555;
+  --checkbox-checked-bg: #ffffff;
+  --checkbox-checked-tick: #000000;
+  --toast-bg: rgba(255, 255, 255, 0.1);
+  --toast-text: #ffffff;
+}
+
+/* 亮色背景主題（淺色時：彈出的 modal 為白底黑字黑框，跟深色完全相反） */
+body.theme-light {
+  --text-color: #000000;
+  --subtext-color: #555555;
+  --accent-rgb: 0, 0, 0;
+  --split-divider: rgba(0, 0, 0, 0.12);
+  --progress-bg: rgba(0, 0, 0, 0.15);
+  --progress-fill: #000000;
+  --ctrl-border: rgba(0, 0, 0, 0.3);
+  --ctrl-color: #000000;
+  --ctrl-hover-bg: rgba(0, 0, 0, 0.08);
+  --text-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+  --cover-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+
+  /* Modal 淺色模式 Token（白底黑框黑字） */
+  --modal-overlay-bg: rgba(255, 255, 255, 0.75);
+  --modal-card-bg: #ffffff;
+  --modal-border: 2px solid #000000;
+  --modal-text: #000000;
+  --modal-desc: #555555;
+  --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --modal-input-bg: #f4f4f4;
+  --modal-input-border: #cccccc;
+  --modal-input-text: #000000;
+  --modal-input-focus: #000000;
+  --btn-pri-bg: #000000;
+  --btn-pri-text: #ffffff;
+  --btn-sec-bg: #e8e8e8;
+  --btn-sec-text: #000000;
+  --kbd-bg: #eaeaea;
+  --kbd-border: #cccccc;
+  --kbd-text: #000000;
+  --setting-section-border: rgba(0, 0, 0, 0.1);
+  --toggle-track-off: #d0d0d0;
+  --toggle-thumb-off: #888888;
+  --toggle-track-on: #000000;
+  --toggle-thumb-on: #ffffff;
+  --checkbox-border: #999999;
+  --checkbox-checked-bg: #000000;
+  --checkbox-checked-tick: #ffffff;
+  --toast-bg: rgba(0, 0, 0, 0.12);
+  --toast-text: #000000;
+}
+
+/* =========================================
+   Reset & 基礎排版
+   ========================================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  transition: color 1.4s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* =========================================
+   極簡頂部載入進度條（切換專輯平滑提示）
+   ========================================= */
+.loader-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--text-color), transparent);
+  opacity: 0;
+  z-index: 99;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.loader-indicator.active {
+  opacity: 0.85;
+  animation: loaderBarAnim 1.6s ease-in-out infinite;
+}
+
+@keyframes loaderBarAnim {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+/* =========================================
+   雙層模糊專輯封面背景層
+   放大超出視窗邊緣並高斯模糊，以 1.8s Crossfade 柔和過渡，杜絕閃爍
+   ========================================= */
+.bg-album-layer {
+  position: fixed;
+  inset: -60px;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(52px);
+  transform: scale(1.12);
+  opacity: 0;
+  transition: opacity 1.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.bg-album-layer.active {
+  opacity: 1;
+}
+
+/* =========================================
+   Canvas 動態背景層
+   ========================================= */
+#bgCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 1.2s ease;
+}
+
+#bgCanvas.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* =========================================
+   主版面容器
+   預設置中（單欄），連接 Spotify 後切換為左右分割
+   ========================================= */
+.app-layout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* =========================================
+   左側：時鐘面板
+   ========================================= */
+.panel-clock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 100vh;
+  padding: 2rem;
+  transition: flex var(--panel-transition);
+}
+
+/* =========================================
+   模式標籤 (CLOCK / STOPWATCH / TIMER)
+   ========================================= */
+.mode-tag {
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--subtext-color);
+  margin-bottom: 1.5rem;
+  opacity: 0.8;
+  transition: opacity 0.3s ease, color 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* =========================================
+   時間主顯示區
+   ========================================= */
+.time-display {
+  font-size: 14vw;
+  font-weight: 200;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--text-color);
+  text-shadow: var(--text-shadow);
+  transition: font-size var(--panel-transition), color 1.4s cubic-bezier(0.2, 0.8, 0.2, 1), text-shadow 1.4s ease;
+}
+
+/* 分割模式下縮小時鐘字型，適應半寬 */
+.app-layout.split .time-display {
+  font-size: 7.5vw;
+}
+
+.sub-display {
+  font-size: 2.5vw;
+  font-weight: 300;
+  color: var(--subtext-color);
+  margin-top: 1rem;
+  font-variant-numeric: tabular-nums;
+  min-height: 3vw;
+  transition: font-size var(--panel-transition), color 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.app-layout.split .sub-display {
+  font-size: 1.4vw;
+}
+
+/* =========================================
+   時間下方 Loading 提示元件（0.5s 柔和載入指示）
+   ========================================= */
+.clock-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  min-height: 26px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.clock-loading.active {
+  opacity: 1;
+}
+
+.clock-loading-text {
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  font-weight: 500;
+  color: var(--subtext-color);
+  text-transform: uppercase;
+  transition: color 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.clock-loading-bar {
+  width: 120px;
+  height: 2px;
+  background: var(--progress-bg);
+  border-radius: 2px;
+  overflow: hidden;
+  transition: background 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.clock-loading-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--text-color);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1), background 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* =========================================
+   右側：Spotify 播放面板
+   ========================================= */
+.panel-spotify {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 0;
+  min-height: 100vh;
+  padding: 2rem;
+  gap: 1.5rem;
+  overflow: hidden;
+  width: 0;
+  opacity: 0;
+  transition:
+    flex var(--panel-transition),
+    width var(--panel-transition),
+    opacity var(--panel-transition);
+}
+
+.panel-spotify.visible {
+  flex: 1;
+  width: auto;
+  opacity: 1;
+}
+
+/* 分隔線 */
+.panel-spotify.visible::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  height: 80%;
+  width: 1px;
+  background: var(--split-divider);
+  transition: background 0.4s ease;
+}
+
+/* =========================================
+   Spotify 大型專輯封面
+   ========================================= */
+.spotify-album {
+  width: min(260px, 28vw);
+  height: min(260px, 28vw);
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: var(--cover-shadow);
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.4s ease;
+}
+
+.panel-spotify.visible .spotify-album {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* =========================================
+   曲目資訊區
+   ========================================= */
+.spotify-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: min(300px, 28vw);
+  text-align: center;
+}
+
+.spotify-track-name {
+  font-size: clamp(1rem, 1.8vw, 1.4rem);
+  font-weight: 600;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  transition: color 0.4s ease;
+}
+
+.spotify-track-artist {
+  font-size: clamp(0.8rem, 1.2vw, 1rem);
+  color: var(--subtext-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  transition: color 0.4s ease;
+}
+
+/* =========================================
+   播放進度條
+   ========================================= */
+.spotify-progress-wrap {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.spotify-progress-bar {
+  width: 100%;
+  height: 3px;
+  background: var(--progress-bg);
+  border-radius: 2px;
+  overflow: hidden;
+  transition: background 0.4s ease;
+}
+
+.spotify-progress-fill {
+  height: 100%;
+  background: var(--progress-fill);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 1s linear, background 0.4s ease;
+}
+
+.spotify-time-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--subtext-color);
+  margin-top: 0.4rem;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.4s ease;
+}
+
+/* =========================================
+   播放控制按鈕
+   ========================================= */
+.spotify-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.ctrl-btn {
+  background: transparent;
+  border: 1px solid var(--ctrl-border);
+  color: var(--ctrl-color);
+  padding: 0.5rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.4s ease, transform 0.1s ease;
+}
+
+.ctrl-btn:hover {
+  background: var(--ctrl-hover-bg);
+  border-color: var(--ctrl-color);
+}
+
+.ctrl-btn:active {
+  transform: scale(0.95);
+}
+
+/* 主要播放 / 暫停按鈕 */
+.ctrl-btn-main {
+  padding: 0.55rem 1.6rem;
+  border-color: var(--ctrl-color);
+  font-size: 0.85rem;
+}
+
+.ctrl-btn-spotify {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  padding: 0.6rem 1.8rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  border-radius: 24px;
+}
+
+/* =========================================
+   畫面中間下方提示（灰色文字）
+   ========================================= */
+.bottom-hint {
+  position: fixed;
+  bottom: 1.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--subtext-color);
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+  cursor: pointer;
+  z-index: 4;
+  transition: opacity 0.25s ease, color 0.4s ease;
+  user-select: none;
+}
+
+.bottom-hint:hover {
+  opacity: 1;
+}
+
+/* =========================================
+   Modal 浮層底板
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--modal-overlay-bg);
+  backdrop-filter: blur(14px);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, background 0.4s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal 卡片本體（深色為黑底白框，淺色為白底黑框） */
+.modal-card {
+  background: var(--modal-card-bg);
+  border: var(--modal-border);
+  color: var(--modal-text);
+  border-radius: 24px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 440px;
+  box-shadow: var(--modal-shadow);
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--modal-text);
+  margin-bottom: 1rem;
+  transition: color 0.4s ease;
+}
+
+.modal-desc {
+  font-size: 0.85rem;
+  color: var(--modal-desc);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  transition: color 0.4s ease;
+}
+
+.modal-code {
+  color: var(--modal-text);
+  word-break: break-all;
+  font-family: monospace;
+  font-size: 0.82rem;
+  background: var(--modal-input-bg);
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 0.35rem;
+  transition: color 0.4s ease, background 0.4s ease;
+}
+
+/* =========================================
+   表單元件
+   ========================================= */
+.modal-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--modal-input-bg);
+  border: 1px solid var(--modal-input-border);
+  border-radius: 8px;
+  color: var(--modal-input-text);
+  font-size: 0.95rem;
+  outline: none;
+  margin-bottom: 1.5rem;
+  transition: background 0.4s ease, border-color 0.3s ease, color 0.4s ease;
+}
+
+.modal-input:focus {
+  border-color: var(--modal-input-focus);
+}
+
+.modal-btn-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* 通用按鈕 */
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s, background 0.4s ease, color 0.4s ease;
+}
+
+.btn-primary {
+  background: var(--btn-pri-bg);
+  color: var(--btn-pri-text);
+}
+
+.btn-secondary {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text);
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+/* =========================================
+   快捷鍵說明清單
+   ========================================= */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--modal-text);
+  transition: color 0.4s ease;
+}
+
+kbd {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--kbd-text);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+}
+
+/* =========================================
+   「下次不再提醒」自訂 Checkbox
+   ========================================= */
+.dont-show-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  color: var(--modal-desc);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.4s ease;
+}
+
+/* 隱藏原生 checkbox */
+.dont-show-check-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dont-show-check-wrap input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* 自訂方框 */
+.dont-show-checkmark {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--checkbox-border);
+  border-radius: 4px;
+  background: transparent;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+/* 選取後方框與勾號 */
+.dont-show-check-wrap input:checked + .dont-show-checkmark {
+  background: var(--checkbox-checked-bg);
+  border-color: var(--checkbox-checked-bg);
+}
+
+.dont-show-check-wrap input:checked + .dont-show-checkmark::after {
+  content: '';
+  display: block;
+  margin: 3px auto 0;
+  width: 4px;
+  height: 7px;
+  border: 2px solid var(--checkbox-checked-tick);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+/* =========================================
+   Toast 淡入提示通知
+   ========================================= */
+.toast {
+  position: absolute;
+  top: 2rem;
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem 1.25rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================================
+   設定 Modal — 分區與設定列
+   ========================================= */
+.settings-section {
+  margin-bottom: 1.5rem;
+}
+
+.settings-section-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--modal-desc);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--setting-section-border);
+  transition: color 0.4s ease, border-color 0.4s ease;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.setting-name {
+  font-size: 0.92rem;
+  color: var(--modal-text);
+  transition: color 0.4s ease;
+}
+
+.setting-hint {
+  font-size: 0.75rem;
+  color: var(--modal-desc);
+  transition: color 0.4s ease;
+}
+
+/* =========================================
+   Toggle 開關元件
+   ========================================= */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--toggle-track-off);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.toggle-track::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--toggle-thumb-off);
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.toggle-switch input:checked + .toggle-track {
+  background: var(--toggle-track-on);
+}
+
+.toggle-switch input:checked + .toggle-track::before {
+  transform: translateX(20px);
+  background: var(--toggle-thumb-on);
+}
+
+/* =========================================
+   游標隱藏模式
+   ========================================= */
+body.cursor-hidden,
+body.cursor-hidden * {
+  cursor: none !important;
+}
